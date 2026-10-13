@@ -43,47 +43,128 @@
     <footer>Images are served directly from this site. Click an image URL to open it on its own.</footer>
   </main>
   <script>
-    const OWNER = "iwantapenguinn";
-    const REPO = "gdruygnygvfrngusrusnnfegdasd";
+    const OWNER = "nnezzy";
+    const REPO = "host";
     const BRANCH = "main";
+    const IMAGE_BASE = "/host/images/";
     const EXTENSIONS = new Set(["png","jpg","jpeg","gif","webp","avif","svg","ico","bmp"]);
     const gallery = document.querySelector("#gallery");
     const status = document.querySelector("#status");
     const count = document.querySelector("#count");
     const search = document.querySelector("#search");
     let images = [];
-    function extensionOf(name) { const i=name.lastIndexOf("."); return i<0 ? "" : name.slice(i+1).toLowerCase(); }
-    function imageSlug(name) { const i=name.lastIndexOf("."); return i>0 && EXTENSIONS.has(name.slice(i+1).toLowerCase()) ? name.slice(0,i) : name; }
+
+    function extensionOf(name) {
+      const i = name.lastIndexOf(".");
+      return i < 0 ? "" : name.slice(i + 1).toLowerCase();
+    }
+
+    function imageUrl(name) {
+      return IMAGE_BASE + encodeURIComponent(name).replace(/%2F/gi, "/");
+    }
+
     function makeCard(file) {
-      const url=location.origin+"/"+encodeURIComponent(imageSlug(file.name));
-      const card=document.createElement("article"); card.className="item";
-      const preview=document.createElement("a"); preview.className="preview"; preview.href=url; preview.target="_blank"; preview.rel="noopener"; preview.setAttribute("aria-label","Open "+file.name);
-      const img=document.createElement("img"); img.src=url; img.alt=file.name; img.loading="lazy"; img.onerror=()=>{img.style.display="none";}; preview.append(img);
-      const details=document.createElement("div"); details.className="details";
-      const filename=document.createElement("div"); filename.className="filename"; filename.textContent=file.name;
-      const actions=document.createElement("div"); actions.className="actions";
-      const open=document.createElement("a"); open.href=url; open.target="_blank"; open.rel="noopener"; open.textContent="Open image";
-      const copy=document.createElement("button"); copy.type="button"; copy.textContent="Copy URL";
-      copy.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(url);copy.textContent="Copied";setTimeout(()=>copy.textContent="Copy URL",1200);}catch{prompt("Copy this image URL:",url);}});
-      actions.append(open,copy); details.append(filename,actions); card.append(preview,details); return card;
+      const url = new URL(imageUrl(file.name), location.origin).href;
+      const card = document.createElement("article");
+      card.className = "item";
+
+      const preview = document.createElement("a");
+      preview.className = "preview";
+      preview.href = url;
+      preview.target = "_blank";
+      preview.rel = "noopener";
+      preview.setAttribute("aria-label", "Open " + file.name);
+
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = file.name;
+      img.loading = "lazy";
+      img.onerror = () => {
+        img.style.display = "none";
+        preview.setAttribute("aria-label", "Image unavailable: " + file.name);
+      };
+      preview.append(img);
+
+      const details = document.createElement("div");
+      details.className = "details";
+
+      const filename = document.createElement("div");
+      filename.className = "filename";
+      filename.textContent = file.name;
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const open = document.createElement("a");
+      open.href = url;
+      open.target = "_blank";
+      open.rel = "noopener";
+      open.textContent = "Open image";
+
+      const copy = document.createElement("button");
+      copy.type = "button";
+      copy.textContent = "Copy URL";
+      copy.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(url);
+          copy.textContent = "Copied";
+          setTimeout(() => copy.textContent = "Copy URL", 1200);
+        } catch {
+          prompt("Copy this image URL:", url);
+        }
+      });
+
+      actions.append(open, copy);
+      details.append(filename, actions);
+      card.append(preview, details);
+      return card;
     }
+
     function render() {
-      const term=search.value.trim().toLowerCase();
-      const shown=images.filter(file=>file.name.toLowerCase().includes(term));
-      gallery.replaceChildren(...shown.map(makeCard)); count.textContent=shown.length+(shown.length===1?" image":" images");
-      status.hidden=shown.length>0;
-      if(!shown.length) status.textContent=images.length?"No images match that search.":"No images found in the images/ folder yet.";
+      const term = search.value.trim().toLowerCase();
+      const shown = images.filter(file => file.name.toLowerCase().includes(term));
+
+      gallery.replaceChildren(...shown.map(makeCard));
+      count.textContent = shown.length + (shown.length === 1 ? " image" : " images");
+      status.hidden = shown.length > 0;
+
+      if (!shown.length) {
+        status.textContent = images.length
+          ? "No images match that search."
+          : "No images found in the images/ folder yet.";
+      }
     }
+
     async function init() {
       try {
-        const response=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/images?ref=${BRANCH}`);
-        if(!response.ok) throw new Error("GitHub returned "+response.status);
-        const files=await response.json();
-        images=files.filter(file=>file.type==="file"&&EXTENSIONS.has(extensionOf(file.name))).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:"base"}));
+        const response = await fetch(
+          `https://api.github.com/repos/${OWNER}/${REPO}/contents/images?ref=${BRANCH}`
+        );
+
+        if (!response.ok) {
+          throw new Error("GitHub returned " + response.status);
+        }
+
+        const files = await response.json();
+        images = files
+          .filter(file => file.type === "file" && EXTENSIONS.has(extensionOf(file.name)))
+          .sort((a, b) => a.name.localeCompare(
+            b.name,
+            undefined,
+            { numeric: true, sensitivity: "base" }
+          ));
+
         render();
-      } catch(error) { count.textContent="Unavailable"; status.textContent="Could not load the image list. Make sure the GitHub repository is public and the images/ folder exists."; console.error(error); }
+      } catch (error) {
+        count.textContent = "Unavailable";
+        status.textContent =
+          "Could not load the image list. Make sure the GitHub repository is public and the images/ folder exists.";
+        console.error(error);
+      }
     }
-    search.addEventListener("input",render); init();
+
+    search.addEventListener("input", render);
+    init();
   </script>
 </body>
 </html>
