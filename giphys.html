@@ -12,10 +12,13 @@
     a { color:inherit; }
     .shell { width:min(1180px,calc(100% - 36px)); margin:0 auto; padding:54px 0 36px; }
     header { display:flex; align-items:end; justify-content:space-between; gap:20px; margin-bottom:30px; }
+    .header-right { display:flex; align-items:center; gap:12px; }
     .eyebrow { color:var(--accent); font-size:11px; font-weight:750; letter-spacing:.18em; text-transform:uppercase; }
     h1 { font-size:clamp(32px,5vw,48px); line-height:1.05; letter-spacing:-.045em; margin:9px 0 8px; }
     .sub { color:var(--muted); margin:0; }
     .count { white-space:nowrap; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:8px 13px; font-size:13px; }
+    .nav-btn { display:inline-flex; align-items:center; text-decoration:none; white-space:nowrap; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:999px; padding:8px 14px; font-size:13px; font-weight:600; transition:border-color 0.2s, background 0.2s; }
+    .nav-btn:hover { border-color:var(--accent); background:var(--line); }
     .toolbar { display:flex; gap:12px; margin-bottom:24px; }
     input { width:100%; min-width:0; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--text); font:inherit; outline:none; }
     input:focus { border-color:var(--accent); }
@@ -38,7 +41,7 @@
     .load-more-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     footer { color:var(--muted); font-size:12px; padding-top:28px; text-align:center; }
     [hidden] { display:none!important; }
-    @media(max-width:520px) { .shell { width:min(100% - 24px,1180px); padding-top:34px; } header { align-items:start; flex-direction:column; } .grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } .preview { height:155px; } .details { padding:9px; } .actions { flex-wrap:wrap; } }
+    @media(max-width:520px) { .shell { width:min(100% - 24px,1180px); padding-top:34px; } header { align-items:start; flex-direction:column; } .header-right { width:100%; justify-content:space-between; flex-wrap:wrap; } .grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } .preview { height:155px; } .details { padding:9px; } .actions { flex-wrap:wrap; } }
   </style>
 </head>
 <body>
@@ -49,176 +52,14 @@
         <h1>GIF Archive</h1>
         <p class="sub">Trending and searchable GIFs powered by the Giphy API.</p>
       </div>
-      <div class="count" id="count">Loading GIFs…</div>
+      <div class="header-right">
+        <a class="nav-btn" href="/host/">← Image Archive</a>
+        <div class="count" id="count">Loading GIFs…</div>
+      </div>
     </header>
     <div class="toolbar">
       <input id="search" type="search" placeholder="Search Giphy (e.g. cats, coding, party)…" aria-label="Search GIFs">
       <button id="search-btn" class="search-btn" type="button">Search</button>
     </div>
     <div id="status" class="status">Loading GIFs from Giphy…</div>
-    <section id="gallery" class="grid" aria-label="GIF gallery"></section>
-    
-    <div id="load-more-container" class="load-more-container" hidden>
-      <button id="load-more-btn" class="load-more-btn" type="button">Load More GIFs</button>
-    </div>
-
-    <footer>Powered by the Giphy API. Click any GIF to open it directly.</footer>
-  </main>
-
-  <script>
-    const API_KEY = "7NHolm8hqmPBH1eSugs0fy2gxPs1tqrj"; 
-    const gallery = document.querySelector("#gallery");
-    const status = document.querySelector("#status");
-    const count = document.querySelector("#count");
-    const searchInput = document.querySelector("#search");
-    const searchBtn = document.querySelector("#search-btn");
-    const loadMoreContainer = document.querySelector("#load-more-container");
-    const loadMoreBtn = document.querySelector("#load-more-btn");
-
-    let isFetching = false;
-    let lastSearchedQuery = "";
-    let currentOffset = 0;
-    const LIMIT = 24;
-    let totalLoadedCount = 0;
-
-    function makeCard(gif) {
-      const url = gif.images.fixed_height.url;
-      const mediaId = gif.id;
-      const originalUrl = `https://media3.giphy.com/media/${mediaId}/giphy.gif`;
-      
-      const card = document.createElement("article");
-      card.className = "item";
-
-      const preview = document.createElement("a");
-      preview.className = "preview";
-      preview.href = originalUrl;
-      preview.target = "_blank";
-      preview.rel = "noopener";
-      preview.setAttribute("aria-label", "Open " + (gif.title || "GIF"));
-
-      const img = document.createElement("img");
-      img.src = url;
-      img.alt = gif.title || "GIF";
-      img.loading = "lazy";
-      preview.append(img);
-
-      const details = document.createElement("div");
-      details.className = "details";
-
-      const filename = document.createElement("div");
-      filename.className = "filename";
-      filename.textContent = gif.title || "Untitled GIF";
-
-      const actions = document.createElement("div");
-      actions.className = "actions";
-
-      const open = document.createElement("a");
-      open.href = originalUrl;
-      open.target = "_blank";
-      open.rel = "noopener";
-      open.textContent = "Open GIF";
-
-      const copy = document.createElement("button");
-      copy.type = "button";
-      copy.textContent = "Copy URL";
-      copy.addEventListener("click", async () => {
-        try {
-          await navigator.clipboard.writeText(originalUrl);
-          copy.textContent = "Copied";
-          setTimeout(() => copy.textContent = "Copy URL", 1200);
-        } catch {
-          prompt("Copy this GIF URL:", originalUrl);
-        }
-      });
-
-      actions.append(open, copy);
-      details.append(filename, actions);
-      card.append(preview, details);
-      return card;
-    }
-
-    async function fetchGifs(query = "", isLoadMore = false) {
-      const trimmedQuery = query.trim();
-
-      // Prevent duplicate simultaneous requests
-      if (isFetching) return;
-
-      // If it's a brand new search query that hasn't changed, ignore redundant clicks
-      if (!isLoadMore && trimmedQuery === lastSearchedQuery) return;
-
-      if (!isLoadMore) {
-        currentOffset = 0;
-        totalLoadedCount = 0;
-        gallery.replaceChildren(); // Clear old results for a new search
-      }
-
-      isFetching = true;
-      searchBtn.disabled = true;
-      loadMoreBtn.disabled = true;
-      status.hidden = false;
-      status.textContent = isLoadMore ? "Loading more GIFs…" : (trimmedQuery ? "Searching Giphy…" : "Loading trending GIFs…");
-
-      try {
-        let endpoint = `https://api.giphy.com/v1/gifs/trending?api_key=${API_KEY}&limit=${LIMIT}&offset=${currentOffset}`;
-        if (trimmedQuery) {
-          endpoint = `https://api.giphy.com/v1/gifs/search?api_key=${API_KEY}&q=${encodeURIComponent(trimmedQuery)}&limit=${LIMIT}&offset=${currentOffset}`;
-        }
-
-        const response = await fetch(endpoint);
-        if (!response.ok) throw new Error("Giphy API error " + response.status);
-
-        const data = await response.json();
-        const gifs = data.data;
-        const pagination = data.pagination;
-
-        lastSearchedQuery = trimmedQuery;
-        totalLoadedCount += gifs.length;
-
-        // Append new cards to the existing gallery instead of replacing them
-        const cards = gifs.map(makeCard);
-        gallery.append(...cards);
-
-        count.textContent = totalLoadedCount + " GIFs shown";
-        status.hidden = totalLoadedCount > 0;
-
-        // Show or hide the "Load More" button based on whether Giphy has more results left
-        const hasMore = (pagination.offset + pagination.count) < pagination.total_count;
-        loadMoreContainer.hidden = !hasMore;
-
-        if (!totalLoadedCount) {
-          status.textContent = "No GIFs found for that search.";
-        }
-      } catch (error) {
-        count.textContent = "Unavailable";
-        status.textContent = "Could not load GIFs from Giphy. Check your connection.";
-        console.error(error);
-      } finally {
-        isFetching = false;
-        searchBtn.disabled = false;
-        loadMoreBtn.disabled = false;
-      }
-    }
-
-    // Search button click
-    searchBtn.addEventListener("click", () => {
-      fetchGifs(searchInput.value, false);
-    });
-
-    // Enter keydown in search box
-    searchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        fetchGifs(searchInput.value, false);
-      }
-    });
-
-    // Load More button click
-    loadMoreBtn.addEventListener("click", () => {
-      currentOffset += LIMIT;
-      fetchGifs(searchInput.value, true);
-    });
-
-    // Initial load (Trending)
-    fetchGifs("", false);
-  </script>
-</body>
-</html>
+    <section id="gallery" class="grid" aria-label="GIF gallery"></
