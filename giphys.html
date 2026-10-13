@@ -22,7 +22,7 @@
     .search-btn { padding:0 20px; border-radius:12px; border:1px solid var(--accent); background:var(--accent); color:#0a0c10; font:inherit; font-weight:700; cursor:pointer; white-space:nowrap; transition:opacity 0.2s; }
     .search-btn:hover { opacity: 0.9; }
     .search-btn:disabled { opacity: 0.5; cursor: not-allowed; border-color: var(--line); background: var(--panel); color: var(--muted); }
-    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:30px; }
     .item { overflow:hidden; background:var(--panel); border:1px solid var(--line); border-radius:15px; min-width:0; display:flex; flex-direction:column; }
     .preview { display:grid; place-items:center; height:210px; background:#0a0c10; overflow:hidden; }
     .preview img { display:block; width:100%; height:100%; object-fit:cover; }
@@ -31,7 +31,11 @@
     .actions { display:flex; gap:8px; }
     .actions a,.actions button { display:inline-flex; justify-content:center; align-items:center; text-decoration:none; border:1px solid var(--line); border-radius:9px; padding:7px 10px; background:transparent; color:var(--text); font:inherit; font-size:12px; cursor:pointer; }
     .actions a:first-child { background:var(--accent); border-color:var(--accent); color:#0a0c10; font-weight:700; }
-    .status { padding:52px 16px; text-align:center; color:var(--muted); border:1px dashed var(--line); border-radius:15px; }
+    .status { padding:52px 16px; text-align:center; color:var(--muted); border:1px dashed var(--line); border-radius:15px; margin-bottom:20px; }
+    .load-more-container { text-align:center; margin:30px 0; }
+    .load-more-btn { padding:12px 28px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--text); font:inherit; font-weight:650; cursor:pointer; transition:border-color 0.2s; }
+    .load-more-btn:hover { border-color:var(--accent); }
+    .load-more-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     footer { color:var(--muted); font-size:12px; padding-top:28px; text-align:center; }
     [hidden] { display:none!important; }
     @media(max-width:520px) { .shell { width:min(100% - 24px,1180px); padding-top:34px; } header { align-items:start; flex-direction:column; } .grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } .preview { height:155px; } .details { padding:9px; } .actions { flex-wrap:wrap; } }
@@ -53,6 +57,11 @@
     </div>
     <div id="status" class="status">Loading GIFs from Giphy…</div>
     <section id="gallery" class="grid" aria-label="GIF gallery"></section>
+    
+    <div id="load-more-container" class="load-more-container" hidden>
+      <button id="load-more-btn" class="load-more-btn" type="button">Load More GIFs</button>
+    </div>
+
     <footer>Powered by the Giphy API. Click any GIF to open it directly.</footer>
   </main>
 
@@ -63,9 +72,14 @@
     const count = document.querySelector("#count");
     const searchInput = document.querySelector("#search");
     const searchBtn = document.querySelector("#search-btn");
+    const loadMoreContainer = document.querySelector("#load-more-container");
+    const loadMoreBtn = document.querySelector("#load-more-btn");
 
     let isFetching = false;
     let lastSearchedQuery = "";
+    let currentOffset = 0;
+    const LIMIT = 24;
+    let totalLoadedCount = 0;
 
     function makeCard(gif) {
       const url = gif.images.fixed_height.url;
@@ -123,21 +137,31 @@
       return card;
     }
 
-    async function fetchGifs(query = "") {
+    async function fetchGifs(query = "", isLoadMore = false) {
       const trimmedQuery = query.trim();
 
-      // Guard: Do nothing if already loading, or if the search query hasn't changed since the last request
-      if (isFetching || trimmedQuery === lastSearchedQuery) return;
+      // Prevent duplicate simultaneous requests
+      if (isFetching) return;
+
+      // If it's a brand new search query that hasn't changed, ignore redundant clicks
+      if (!isLoadMore && trimmedQuery === lastSearchedQuery) return;
+
+      if (!isLoadMore) {
+        currentOffset = 0;
+        totalLoadedCount = 0;
+        gallery.replaceChildren(); // Clear old results for a new search
+      }
 
       isFetching = true;
       searchBtn.disabled = true;
+      loadMoreBtn.disabled = true;
       status.hidden = false;
-      status.textContent = trimmedQuery ? "Searching Giphy…" : "Loading trending GIFs…";
+      status.textContent = isLoadMore ? "Loading more GIFs…" : (trimmedQuery ? "Searching Giphy…" : "Loading trending GIFs…");
 
       try {
-        let endpoint = `https://api.giphy.com/v1/gifs/trending?api_key=${API_KEY}&limit=24`;
+        let endpoint = `https://api.giphy.com/v1/gifs/trending?api_key=${API_KEY}&limit=${LIMIT}&offset=${currentOffset}`;
         if (trimmedQuery) {
-          endpoint = `https://api.giphy.com/v1/gifs/search?api_key=${API_KEY}&q=${encodeURIComponent(trimmedQuery)}&limit=24`;
+          endpoint = `https://api.giphy.com/v1/gifs/search?api_key=${API_KEY}&q=${encodeURIComponent(trimmedQuery)}&limit=${LIMIT}&offset=${currentOffset}`;
         }
 
         const response = await fetch(endpoint);
@@ -145,14 +169,23 @@
 
         const data = await response.json();
         const gifs = data.data;
+        const pagination = data.pagination;
 
-        lastSearchedQuery = trimmedQuery; // Remember this query successfully
+        lastSearchedQuery = trimmedQuery;
+        totalLoadedCount += gifs.length;
 
-        gallery.replaceChildren(...gifs.map(makeCard));
-        count.textContent = gifs.length + (gifs.length === 1 ? " GIF" : " GIFs");
-        status.hidden = gifs.length > 0;
+        // Append new cards to the existing gallery instead of replacing them
+        const cards = gifs.map(makeCard);
+        gallery.append(...cards);
 
-        if (!gifs.length) {
+        count.textContent = totalLoadedCount + " GIFs shown";
+        status.hidden = totalLoadedCount > 0;
+
+        // Show or hide the "Load More" button based on whether Giphy has more results left
+        const hasMore = (pagination.offset + pagination.count) < pagination.total_count;
+        loadMoreContainer.hidden = !hasMore;
+
+        if (!totalLoadedCount) {
           status.textContent = "No GIFs found for that search.";
         }
       } catch (error) {
@@ -162,23 +195,30 @@
       } finally {
         isFetching = false;
         searchBtn.disabled = false;
+        loadMoreBtn.disabled = false;
       }
     }
 
-    // Trigger search when clicking the Search button
+    // Search button click
     searchBtn.addEventListener("click", () => {
-      fetchGifs(searchInput.value);
+      fetchGifs(searchInput.value, false);
     });
 
-    // Trigger search when pressing Enter inside the input field
+    // Enter keydown in search box
     searchInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
-        fetchGifs(searchInput.value);
+        fetchGifs(searchInput.value, false);
       }
     });
 
+    // Load More button click
+    loadMoreBtn.addEventListener("click", () => {
+      currentOffset += LIMIT;
+      fetchGifs(searchInput.value, true);
+    });
+
     // Initial load (Trending)
-    fetchGifs();
+    fetchGifs("", false);
   </script>
 </body>
 </html>
