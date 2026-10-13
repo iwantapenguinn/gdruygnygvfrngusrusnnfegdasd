@@ -1,291 +1,58 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#090a0f">
-  <title>Nexus Archive — High-End Image Repository</title>
-  <!-- Tailwind CSS v3 -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            dark: {
-              950: '#060709',
-              900: '#090a0f',
-              850: '#0e1117',
-              800: '#151922',
-              750: '#1d2330',
-              700: '#272f40',
-            },
-            accent: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              400: '#818cf8',
-              500: '#6366f1',
-              600: '#4f46e5',
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
-          }
-        }
-      }
-    }
-  </script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta name="theme-color" content="#0d0f14">
+  <title>Image Archive</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    
-    /* Custom scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #090a0f; }
-    ::-webkit-scrollbar-thumb { background: #272f40; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #4f46e5; }
-
-    .glass-panel {
-      background: rgba(21, 25, 34, 0.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    
-    .glass-dropdown {
-      background: rgba(14, 17, 23, 0.95);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .animate-fade-in {
-      animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    .shimmer {
-      background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
-      background-size: 200% 100%;
-      animation: shimmer 2s infinite;
-    }
-
-    @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
+    :root { color-scheme: dark; --bg:#0d0f14; --panel:#151821; --text:#f3f5fa; --muted:#9aa3b5; --line:#292e3a; --accent:#a8b7ff; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    a { color:inherit; }
+    .shell { width:min(1180px,calc(100% - 36px)); margin:0 auto; padding:54px 0 36px; }
+    header { display:flex; align-items:end; justify-content:space-between; gap:20px; margin-bottom:30px; }
+    .eyebrow { color:var(--accent); font-size:11px; font-weight:750; letter-spacing:.18em; text-transform:uppercase; }
+    h1 { font-size:clamp(32px,5vw,48px); line-height:1.05; letter-spacing:-.045em; margin:9px 0 8px; }
+    .sub { color:var(--muted); margin:0; }
+    .count { white-space:nowrap; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:8px 13px; font-size:13px; }
+    .toolbar { display:flex; gap:12px; margin-bottom:24px; }
+    input { width:100%; min-width:0; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--text); font:inherit; outline:none; }
+    input:focus { border-color:var(--accent); }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+    .item { overflow:hidden; background:var(--panel); border:1px solid var(--line); border-radius:15px; min-width:0; }
+    .preview { display:grid; place-items:center; height:210px; background:#0a0c10; overflow:hidden; }
+    .preview img { display:block; width:100%; height:100%; object-fit:contain; }
+    .details { padding:12px; }
+    .filename { font-weight:650; overflow-wrap:anywhere; margin-bottom:10px; }
+    .actions { display:flex; gap:8px; }
+    .actions a,.actions button { display:inline-flex; justify-content:center; align-items:center; text-decoration:none; border:1px solid var(--line); border-radius:9px; padding:7px 10px; background:transparent; color:var(--text); font:inherit; font-size:12px; cursor:pointer; }
+    .actions a:first-child { background:var(--accent); border-color:var(--accent); color:#101321; font-weight:700; }
+    .status { padding:52px 16px; text-align:center; color:var(--muted); border:1px dashed var(--line); border-radius:15px; }
+    footer { color:var(--muted); font-size:12px; padding-top:28px; text-align:center; }
+    [hidden] { display:none!important; }
+    @media(max-width:520px) { .shell { width:min(100% - 24px,1180px); padding-top:34px; } header { align-items:start; flex-direction:column; } .grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } .preview { height:155px; } .details { padding:9px; } .actions { flex-wrap:wrap; } }
   </style>
 </head>
-<body class="bg-dark-900 text-slate-100 font-sans min-h-screen selection:bg-indigo-500 selection:text-white">
-
-  <!-- Header & Navigation -->
-  <header class="sticky top-0 z-40 border-b border-white/10 glass-panel">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-          <i class="fa-solid fa-layer-group text-white text-lg"></i>
-        </div>
-        <div>
-          <span class="text-xs font-bold tracking-widest text-indigo-400 uppercase">Public Repository</span>
-          <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            Nexus Archive
-            <span id="badge-count" class="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">Loading…</span>
-          </h1>
-        </div>
-      </div>
-
-      <!-- Quick Actions / Status Header -->
-      <div class="flex items-center gap-3">
-        <button id="btn-refresh" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-dark-800 hover:bg-dark-750 border border-white/10 text-slate-300 hover:text-white transition-all shadow-sm">
-          <i class="fa-solid fa-rotate text-indigo-400"></i>
-          Sync Repo
-        </button>
-        <div class="h-6 w-px bg-white/10 hidden sm:block"></div>
-        <div class="flex items-center gap-2">
-          <a href="https://github.com/nnezzy/host" target="_blank" rel="noopener" class="w-10 h-10 rounded-xl bg-dark-800 hover:bg-dark-750 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all shadow-sm" title="View GitHub Repository">
-            <i class="fa-brands fa-github text-lg"></i>
-          </a>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Content Shell -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    
-    <!-- Hero / Intro Banner -->
-    <div class="mb-8 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-indigo-950/40 via-dark-800 to-violet-950/30 border border-white/10 relative overflow-hidden shadow-2xl">
-      <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="max-w-2xl relative z-10">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold mb-3">
-          <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
-          Live GitHub Sync Active
-        </div>
-        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2">Explore the Collection</h2>
-        <p class="text-slate-400 text-sm sm:text-base leading-relaxed">
-          High-performance image repository served directly from <code class="text-indigo-300 bg-dark-850 px-1.5 py-0.5 rounded border border-white/5">/host/images/</code>. Search, preview in high fidelity, copy CDN links instantly, or download assets.
-        </p>
-      </div>
-    </div>
-
-    <!-- Toolbar: Search, Sort & View Modes -->
-    <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-8">
-      <!-- Search Input -->
-      <div class="relative flex-1">
-        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-          <i class="fa-solid fa-magnifying-glass"></i>
-        </div>
-        <input id="search-input" type="search" placeholder="Search images by filename or extension..." 
-          class="w-full pl-11 pr-10 py-3.5 bg-dark-850 border border-white/10 rounded-2xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-inner">
-        <button id="search-clear" type="button" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-white hidden">
-          <i class="fa-solid fa-circle-xmark text-base"></i>
-        </button>
-      </div>
-
-      <!-- Controls Right: Sort & Layout Toggle -->
-      <div class="flex items-center gap-3">
-        <!-- Sort Dropdown -->
-        <div class="relative">
-          <select id="sort-select" class="appearance-none bg-dark-850 border border-white/10 text-slate-200 text-sm rounded-2xl px-4 py-3.5 pr-10 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 cursor-pointer shadow-sm">
-            <option value="name-asc">Name (A → Z)</option>
-            <option value="name-desc">Name (Z → A)</option>
-            <option value="size-desc">File Size (Largest)</option>
-            <option value="size-asc">File Size (Smallest)</option>
-          </select>
-          <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400">
-            <i class="fa-solid fa-chevron-down text-xs"></i>
-          </div>
-        </div>
-
-        <!-- View Mode Toggle (Grid vs Compact) -->
-        <div class="flex items-center bg-dark-850 border border-white/10 rounded-2xl p-1 shadow-sm">
-          <button id="btn-grid-view" title="Standard Grid" class="p-2.5 rounded-xl text-indigo-400 bg-indigo-500/15 transition-all">
-            <i class="fa-solid fa-grip text-sm"></i>
-          </button>
-          <button id="btn-compact-view" title="Compact Grid" class="p-2.5 rounded-xl text-slate-400 hover:text-white transition-all">
-            <i class="fa-solid fa-table-cells text-sm"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Active Filters / Tag Chips -->
-    <div id="filter-chips" class="flex flex-wrap items-center gap-2 mb-6 hidden">
-      <span class="text-xs text-slate-400 font-medium mr-1">Filter by format:</span>
-      <!-- Chips populated dynamically -->
-    </div>
-
-    <!-- Status / Loading Banner -->
-    <div id="status-container" class="py-20 text-center glass-panel rounded-3xl border border-dashed border-white/10 mb-8">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-400 mb-4 animate-bounce">
-        <i class="fa-solid fa-cloud-arrow-down text-2xl"></i>
-      </div>
-      <h3 id="status-title" class="text-lg font-semibold text-white mb-1">Fetching image collection...</h3>
-      <p id="status-desc" class="text-sm text-slate-400 max-w-md mx-auto">Connecting to GitHub API to retrieve repository contents from <code class="text-indigo-300">/images</code>.</p>
-    </div>
-
-    <!-- Gallery Grid -->
-    <section id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5" aria-label="Image gallery"></section>
-
-    <!-- Footer -->
-    <footer class="mt-20 pt-8 border-t border-white/10 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <p>Nexus Archive • Images served directly via GitHub raw/CDN endpoints.</p>
-      <div class="flex items-center gap-4 text-slate-400">
-        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> API Connected</span>
-        <span>•</span>
-        <span id="footer-stats">0 items loaded</span>
-      </div>
-    </footer>
+<body>
+  <main class="shell">
+    <header><div><div class="eyebrow">Public image library</div><h1>Image archive</h1><p class="sub">Every image in the collection, all in one place.</p></div><div class="count" id="count">Loading images…</div></header>
+    <div class="toolbar"><input id="search" type="search" placeholder="Search images by filename…" aria-label="Search images"></div>
+    <div id="status" class="status">Loading the image collection…</div>
+    <section id="gallery" class="grid" aria-label="Image gallery"></section>
+    <footer>Images are served directly from this site. Click an image URL to open it on its own.</footer>
   </main>
-
-  <!-- Lightbox Modal -->
-  <div id="lightbox" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 sm:p-8 opacity-0 pointer-events-none transition-all duration-300">
-    <!-- Top Action Bar -->
-    <div class="absolute top-4 inset-x-4 sm:inset-x-8 flex items-center justify-between z-10">
-      <div class="flex items-center gap-3 bg-dark-800/80 backdrop-blur border border-white/10 px-4 py-2 rounded-2xl">
-        <span id="lb-filename" class="text-sm font-semibold text-white max-w-[200px] sm:max-w-md truncate">filename.png</span>
-        <span id="lb-filesize" class="text-xs text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md font-mono">0 KB</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <a id="lb-download" href="#" download class="p-3 rounded-2xl bg-dark-800/80 hover:bg-dark-750 border border-white/10 text-slate-200 hover:text-white transition-all shadow-lg flex items-center gap-2 text-xs font-semibold" title="Download Image">
-          <i class="fa-solid fa-download text-indigo-400"></i>
-          <span class="hidden sm:inline">Download</span>
-        </a>
-        <button id="lb-copy" class="p-3 rounded-2xl bg-dark-800/80 hover:bg-dark-750 border border-white/10 text-slate-200 hover:text-white transition-all shadow-lg flex items-center gap-2 text-xs font-semibold" title="Copy URL">
-          <i class="fa-solid fa-link text-indigo-400"></i>
-          <span class="hidden sm:inline">Copy URL</span>
-        </button>
-        <button id="lb-close" class="w-11 h-11 rounded-2xl bg-dark-800/80 hover:bg-red-500/20 border border-white/10 hover:border-red-500/40 text-slate-200 hover:text-red-400 transition-all shadow-lg flex items-center justify-center text-base" title="Close Lightbox">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-    </div>
-
-    <!-- Main Lightbox Preview Area -->
-    <div class="relative max-w-5xl max-h-[75vh] w-full h-full flex items-center justify-center my-auto">
-      <img id="lb-img" src="" alt="" class="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl border border-white/10 transition-transform duration-300">
-    </div>
-
-    <!-- Lightbox Bottom Pagination / Info -->
-    <div class="absolute bottom-4 inset-x-4 flex items-center justify-center gap-4 text-xs text-slate-400">
-      <button id="lb-prev" class="px-4 py-2 rounded-xl bg-dark-800/80 hover:bg-dark-750 border border-white/10 text-white transition-all flex items-center gap-2">
-        <i class="fa-solid fa-chevron-left"></i> Previous
-      </button>
-      <span id="lb-counter" class="font-mono text-slate-300">1 / 1</span>
-      <button id="lb-next" class="px-4 py-2 rounded-xl bg-dark-800/80 hover:bg-dark-750 border border-white/10 text-white transition-all flex items-center gap-2">
-        Next <i class="fa-solid fa-chevron-right"></i>
-      </button>
-    </div>
-  </div>
-
-  <!-- Toast Notification System -->
-  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
-
   <script>
     const OWNER = "nnezzy";
     const REPO = "host";
     const BRANCH = "main";
     const IMAGE_BASE = "/host/images/";
     const EXTENSIONS = new Set(["png","jpg","jpeg","gif","webp","avif","svg","ico","bmp"]);
-
-    // DOM Elements
-    const galleryGrid = document.querySelector("#gallery-grid");
-    const statusContainer = document.querySelector("#status-container");
-    const statusTitle = document.querySelector("#status-title");
-    const statusDesc = document.querySelector("#status-desc");
-    const badgeCount = document.querySelector("#badge-count");
-    const footerStats = document.querySelector("#footer-stats");
-    const searchInput = document.querySelector("#search-input");
-    const searchClear = document.querySelector("#search-clear");
-    const sortSelect = document.querySelector("#sort-select");
-    const btnRefresh = document.querySelector("#btn-refresh");
-    const btnGridView = document.querySelector("#btn-grid-view");
-    const btnCompactView = document.querySelector("#btn-compact-view");
-    const filterChips = document.querySelector("#filter-chips");
-
-    // Lightbox DOM Elements
-    const lightbox = document.querySelector("#lightbox");
-    const lbImg = document.querySelector("#lb-img");
-    const lbFilename = document.querySelector("#lb-filename");
-    const lbFilesize = document.querySelector("#lb-filesize");
-    const lbDownload = document.querySelector("#lb-download");
-    const lbCopy = document.querySelector("#lb-copy");
-    const lbClose = document.querySelector("#lb-close");
-    const lbPrev = document.querySelector("#lb-prev");
-    const lbNext = document.querySelector("#lb-next");
-    const lbCounter = document.querySelector("#lb-counter");
-
-    // Application State
+    const gallery = document.querySelector("#gallery");
+    const status = document.querySelector("#status");
+    const count = document.querySelector("#count");
+    const search = document.querySelector("#search");
     let images = [];
-    let filteredImages = [];
-    let currentLightboxIndex = 0;
-    let currentLayout = 'grid'; // 'grid' or 'compact'
-    let activeExtFilter = 'all';
 
     function extensionOf(name) {
       const i = name.lastIndexOf(".");
@@ -296,337 +63,107 @@
       return IMAGE_BASE + encodeURIComponent(name).replace(/%2F/gi, "/");
     }
 
-    function formatBytes(bytes) {
-      if (!bytes || isNaN(bytes)) return "Unknown size";
-      if (bytes < 1024) return bytes + ' B';
-      else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-      else return (bytes / 1048576).toFixed(1) + ' MB';
-    }
-
-    function showToast(message, type = 'success') {
-      const container = document.querySelector("#toast-container");
-      const toast = document.createElement("div");
-      toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl glass-panel shadow-2xl border text-sm font-medium animate-fade-in transition-all ${
-        type === 'success' ? 'border-emerald-500/30 text-emerald-200 bg-emerald-950/80' : 'border-indigo-500/30 text-indigo-200 bg-indigo-950/80'
-      }`;
-      
-      const icon = document.createElement("i");
-      icon.className = type === 'success' ? 'fa-solid fa-circle-check text-emerald-400' : 'fa-solid fa-circle-info text-indigo-400';
-      
-      const text = document.createElement("span");
-      text.textContent = message;
-
-      toast.append(icon, text);
-      container.append(toast);
-
-      setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(10px)';
-        setTimeout(() => toast.remove(), 300);
-      }, 2500);
-    }
-
-    function openLightbox(index) {
-      currentLightboxIndex = index;
-      const file = filteredImages[currentLightboxIndex];
-      if (!file) return;
-
+    function makeCard(file) {
       const url = new URL(imageUrl(file.name), location.origin).href;
-      lbImg.src = url;
-      lbImg.alt = file.name;
-      lbFilename.textContent = file.name;
-      lbFilesize.textContent = formatBytes(file.size);
-      lbDownload.href = url;
-      lbDownload.setAttribute("download", file.name);
-      lbCounter.textContent = `${currentLightboxIndex + 1} / ${filteredImages.length}`;
-
-      lightbox.classList.remove("opacity-0", "pointer-events-none");
-      document.body.style.overflow = "hidden";
-    }
-
-    function closeLightbox() {
-      lightbox.classList.add("opacity-0", "pointer-events-none");
-      document.body.style.overflow = "";
-    }
-
-    function makeCard(file, index) {
-      const url = new URL(imageUrl(file.name), location.origin).href;
-      const ext = extensionOf(file.name).toUpperCase();
-      
       const card = document.createElement("article");
-      card.className = `group glass-panel rounded-2xl overflow-hidden border border-white/10 hover:border-indigo-500/50 transition-all duration-300 flex flex-col shadow-lg hover:shadow-indigo-500/10 animate-fade-in`;
-      
-      // Preview container
-      const previewDiv = document.createElement("div");
-      previewDiv.className = `relative ${currentLayout === 'compact' ? 'h-40' : 'h-52'} bg-dark-950 flex items-center justify-center overflow-hidden cursor-pointer`;
-      previewDiv.addEventListener("click", () => {
-        const actualIndex = filteredImages.findIndex(f => f.name === file.name);
-        openLightbox(actualIndex >= 0 ? actualIndex : index);
-      });
+      card.className = "item";
+
+      const preview = document.createElement("a");
+      preview.className = "preview";
+      preview.href = url;
+      preview.target = "_blank";
+      preview.rel = "noopener";
+      preview.setAttribute("aria-label", "Open " + file.name);
 
       const img = document.createElement("img");
       img.src = url;
       img.alt = file.name;
       img.loading = "lazy";
-      img.className = "w-full h-full object-cover group-hover:scale-105 transition-transform duration-500";
       img.onerror = () => {
         img.style.display = "none";
-        const placeholder = document.createElement("div");
-        placeholder.className = "flex flex-col items-center justify-center text-slate-500 p-4 text-center";
-        placeholder.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-xl mb-1 text-amber-400"></i><span class="text-xs">Preview unavailable</span>`;
-        previewDiv.append(placeholder);
+        preview.setAttribute("aria-label", "Image unavailable: " + file.name);
       };
+      preview.append(img);
 
-      // Format Badge overlay
-      const badge = document.createElement("div");
-      badge.className = "absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-[10px] font-bold text-white uppercase tracking-wider border border-white/10";
-      badge.textContent = ext || 'IMG';
-
-      previewDiv.append(img, badge);
-
-      // Details container
       const details = document.createElement("div");
-      details.className = "p-4 flex flex-col flex-1 justify-between gap-3";
+      details.className = "details";
 
-      const topRow = document.createElement("div");
-      topRow.className = "flex items-start justify-between gap-2";
-
-      const filename = document.createElement("h4");
-      filename.className = "text-sm font-semibold text-slate-100 truncate flex-1" + (currentLayout === 'compact' ? " text-xs" : "");
+      const filename = document.createElement("div");
+      filename.className = "filename";
       filename.textContent = file.name;
-      filename.title = file.name;
 
-      const sizeSpan = document.createElement("span");
-      sizeSpan.className = "text-[11px] text-slate-400 font-mono whitespace-nowrap bg-dark-800 px-2 py-0.5 rounded";
-      sizeSpan.textContent = formatBytes(file.size);
-
-      topRow.append(filename, sizeSpan);
-
-      // Action buttons
       const actions = document.createElement("div");
-      actions.className = "flex items-center gap-2 pt-1 border-t border-white/5";
+      actions.className = "actions";
 
-      const openBtn = document.createElement("a");
-      openBtn.href = url;
-      openBtn.target = "_blank";
-      openBtn.rel = "noopener";
-      openBtn.className = "flex-1 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold text-center transition-all shadow-sm shadow-indigo-600/30 flex items-center justify-center gap-1.5";
-      openBtn.innerHTML = `<i class="fa-solid fa-eye text-[11px]"></i> Open`;
+      const open = document.createElement("a");
+      open.href = url;
+      open.target = "_blank";
+      open.rel = "noopener";
+      open.textContent = "Open image";
 
-      const copyBtn = document.createElement("button");
-      copyBtn.type = "button";
-      copyBtn.className = "py-2 px-3 rounded-xl bg-dark-800 hover:bg-dark-750 border border-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5";
-      copyBtn.innerHTML = `<i class="fa-solid fa-copy text-[11px]"></i> Copy`;
-      copyBtn.addEventListener("click", async () => {
+      const copy = document.createElement("button");
+      copy.type = "button";
+      copy.textContent = "Copy URL";
+      copy.addEventListener("click", async () => {
         try {
           await navigator.clipboard.writeText(url);
-          showToast(`Copied URL for ${file.name}`);
+          copy.textContent = "Copied";
+          setTimeout(() => copy.textContent = "Copy URL", 1200);
         } catch {
-          prompt("Copy image URL:", url);
+          prompt("Copy this image URL:", url);
         }
       });
 
-      const downloadBtn = document.createElement("a");
-      downloadBtn.href = url;
-      downloadBtn.setAttribute("download", file.name);
-      downloadBtn.className = "py-2 px-3 rounded-xl bg-dark-800 hover:bg-dark-750 border border-white/10 text-slate-300 hover:text-white text-xs font-semibold transition-all flex items-center justify-center" + (currentLayout === 'compact' ? " hidden sm:flex" : "");
-      downloadBtn.innerHTML = `<i class="fa-solid fa-download text-[11px]"></i>`;
-      downloadBtn.title = "Download image";
-
-      actions.append(openBtn, copyBtn, downloadBtn);
-      details.append(topRow, actions);
-      card.append(previewDiv, details);
-
+      actions.append(open, copy);
+      details.append(filename, actions);
+      card.append(preview, details);
       return card;
-    }
-
-    function renderFilterChips() {
-      const extensions = new Set(images.map(f => extensionOf(f.name)).filter(Boolean));
-      if (extensions.size <= 1) {
-        filterChips.classList.add("hidden");
-        return;
-      }
-
-      filterChips.classList.remove("hidden");
-      // Keep label, remove existing dynamic chips
-      while (filterChips.children.length > 1) {
-        filterChips.lastChild.remove();
-      }
-
-      // All chip
-      const allChip = document.createElement("button");
-      allChip.className = `px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-        activeExtFilter === 'all' 
-          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' 
-          : 'bg-dark-800 hover:bg-dark-750 text-slate-300 border border-white/10'
-      }`;
-      allChip.textContent = `All (${images.length})`;
-      allChip.addEventListener("click", () => {
-        activeExtFilter = 'all';
-        renderFilterChips();
-        render();
-      });
-      filterChips.append(allChip);
-
-      extensions.forEach(ext => {
-        const count = images.filter(f => extensionOf(f.name) === ext).length;
-        const chip = document.createElement("button");
-        chip.className = `px-3 py-1.5 rounded-xl text-xs font-semibold transition-all uppercase ${
-          activeExtFilter === ext 
-            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' 
-            : 'bg-dark-800 hover:bg-dark-750 text-slate-300 border border-white/10'
-        }`;
-        chip.textContent = `${ext} (${count})`;
-        chip.addEventListener("click", () => {
-          activeExtFilter = ext;
-          renderFilterChips();
-          render();
-        });
-        filterChips.append(chip);
-      });
     }
 
     function render() {
       const term = search.value.trim().toLowerCase();
-      searchClear.classList.toggle("hidden", term.length === 0);
+      const shown = images.filter(file => file.name.toLowerCase().includes(term));
 
-      // Filter by search & extension
-      filteredImages = images.filter(file => {
-        const matchesSearch = file.name.toLowerCase().includes(term);
-        const matchesExt = activeExtFilter === 'all' || extensionOf(file.name) === activeExtFilter;
-        return matchesSearch && matchesExt;
-      });
+      gallery.replaceChildren(...shown.map(makeCard));
+      count.textContent = shown.length + (shown.length === 1 ? " image" : " images");
+      status.hidden = shown.length > 0;
 
-      // Sort
-      const sortBy = sortSelect.value;
-      filteredImages.sort((a, b) => {
-        if (sortBy === 'name-asc') {
-          return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
-        } else if (sortBy === 'name-desc') {
-          return b.name.localeCompare(a.name, undefined, { numeric: true, sensitivity: 'base' });
-        } else if (sortBy === 'size-desc') {
-          return (b.size || 0) - (a.size || 0);
-        } else if (sortBy === 'size-asc') {
-          return (a.size || 0) - (b.size || 0);
-        }
-        return 0;
-      });
-
-      // Render cards
-      galleryGrid.replaceChildren(...filteredImages.map((file, i) => makeCard(file, i)));
-
-      // Update UI counts and status
-      const countText = `${filteredImages.length} ${filteredImages.length === 1 ? 'image' : 'images'}`;
-      badgeCount.textContent = countText;
-      footerStats.textContent = `${images.length} total items in repository`;
-
-      if (filteredImages.length > 0) {
-        statusContainer.classList.add("hidden");
-      } else {
-        statusContainer.classList.remove("hidden");
-        if (images.length > 0) {
-          statusTitle.textContent = "No matching images found";
-          statusDesc.textContent = "Try adjusting your search query or format filter.";
-        } else {
-          statusTitle.textContent = "No images found";
-          statusDesc.textContent = "The images/ folder in the repository appears to be empty.";
-        }
+      if (!shown.length) {
+        status.textContent = images.length
+          ? "No images match that search."
+          : "No images found in the images/ folder yet.";
       }
     }
 
     async function init() {
       try {
-        statusContainer.classList.remove("hidden");
-        statusTitle.textContent = "Fetching image collection...";
-        statusDesc.textContent = `Connecting to GitHub API for ${OWNER}/${REPO}...`;
-        
         const response = await fetch(
           `https://api.github.com/repos/${OWNER}/${REPO}/contents/images?ref=${BRANCH}`
         );
 
         if (!response.ok) {
-          throw new Error("GitHub API returned status " + response.status);
+          throw new Error("GitHub returned " + response.status);
         }
 
         const files = await response.json();
-        images = files.filter(file => file.type === "file" && EXTENSIONS.has(extensionOf(file.name)));
+        images = files
+          .filter(file => file.type === "file" && EXTENSIONS.has(extensionOf(file.name)))
+          .sort((a, b) => a.name.localeCompare(
+            b.name,
+            undefined,
+            { numeric: true, sensitivity: "base" }
+          ));
 
-        renderFilterChips();
         render();
-        showToast("Successfully synchronized with GitHub!", "success");
       } catch (error) {
+        count.textContent = "Unavailable";
+        status.textContent =
+          "Could not load the image list. Make sure the GitHub repository is public and the images/ folder exists.";
         console.error(error);
-        statusContainer.classList.remove("hidden");
-        statusTitle.textContent = "Repository access unavailable";
-        statusDesc.textContent = "Could not fetch image list. Make sure the repository is public and contains an /images folder.";
-        badgeCount.textContent = "Error";
-        showToast("Failed to load images from GitHub", "error");
       }
     }
 
-    // Event Listeners
-    searchInput.addEventListener("input", render);
-    searchClear.addEventListener("click", () => {
-      searchInput.value = "";
-      render();
-    });
-    sortSelect.addEventListener("change", render);
-    btnRefresh.addEventListener("click", init);
-
-    btnGridView.addEventListener("click", () => {
-      currentLayout = 'grid';
-      btnGridView.className = "p-2.5 rounded-xl text-indigo-400 bg-indigo-500/15 transition-all";
-      btnCompactView.className = "p-2.5 rounded-xl text-slate-400 hover:text-white transition-all";
-      galleryGrid.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5";
-      render();
-    });
-
-    btnCompactView.addEventListener("click", () => {
-      currentLayout = 'compact';
-      btnCompactView.className = "p-2.5 rounded-xl text-indigo-400 bg-indigo-500/15 transition-all";
-      btnGridView.className = "p-2.5 rounded-xl text-slate-400 hover:text-white transition-all";
-      galleryGrid.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5";
-      render();
-    });
-
-    // Lightbox Controls
-    lbClose.addEventListener("click", closeLightbox);
-    lightbox.addEventListener("click", (e) => {
-      if (e.target === lightbox) closeLightbox();
-    });
-
-    lbPrev.addEventListener("click", () => {
-      if (filteredImages.length === 0) return;
-      currentLightboxIndex = (currentLightboxIndex - 1 + filteredImages.length) % filteredImages.length;
-      openLightbox(currentLightboxIndex);
-    });
-
-    lbNext.addEventListener("click", () => {
-      if (filteredImages.length === 0) return;
-      currentLightboxIndex = (currentLightboxIndex + 1) % filteredImages.length;
-      openLightbox(currentLightboxIndex);
-    });
-
-    lbCopy.addEventListener("click", async () => {
-      const file = filteredImages[currentLightboxIndex];
-      if (!file) return;
-      const url = new URL(imageUrl(file.name), location.origin).href;
-      try {
-        await navigator.clipboard.writeText(url);
-        showToast(`Copied URL for ${file.name}`);
-      } catch {
-        prompt("Copy image URL:", url);
-      }
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (lightbox.classList.contains("pointer-events-none")) return;
-      if (e.key === "Escape") closeLightbox();
-      if (e.key === "ArrowLeft") lbPrev.click();
-      if (e.key === "ArrowRight") lbNext.click();
-    });
-
-    // Initialize on load
+    search.addEventListener("input", render);
     init();
   </script>
 </body>
