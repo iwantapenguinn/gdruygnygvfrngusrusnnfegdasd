@@ -19,6 +19,9 @@
     .toolbar { display:flex; gap:12px; margin-bottom:24px; }
     input { width:100%; min-width:0; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--text); font:inherit; outline:none; }
     input:focus { border-color:var(--accent); }
+    .search-btn { padding:0 20px; border-radius:12px; border:1px solid var(--accent); background:var(--accent); color:#0a0c10; font:inherit; font-weight:700; cursor:pointer; white-space:nowrap; transition:opacity 0.2s; }
+    .search-btn:hover { opacity: 0.9; }
+    .search-btn:disabled { opacity: 0.5; cursor: not-allowed; border-color: var(--line); background: var(--panel); color: var(--muted); }
     .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
     .item { overflow:hidden; background:var(--panel); border:1px solid var(--line); border-radius:15px; min-width:0; display:flex; flex-direction:column; }
     .preview { display:grid; place-items:center; height:210px; background:#0a0c10; overflow:hidden; }
@@ -46,6 +49,7 @@
     </header>
     <div class="toolbar">
       <input id="search" type="search" placeholder="Search Giphy (e.g. cats, coding, party)…" aria-label="Search GIFs">
+      <button id="search-btn" class="search-btn" type="button">Search</button>
     </div>
     <div id="status" class="status">Loading GIFs from Giphy…</div>
     <section id="gallery" class="grid" aria-label="GIF gallery"></section>
@@ -53,17 +57,18 @@
   </main>
 
   <script>
-    // Using Giphy's public beta/demo API key (for production apps, get your own free key at developers.giphy.com)
     const API_KEY = "7NHolm8hqmPBH1eSugs0fy2gxPs1tqrj"; 
     const gallery = document.querySelector("#gallery");
     const status = document.querySelector("#status");
     const count = document.querySelector("#count");
-    const search = document.querySelector("#search");
-    let searchTimeout = null;
+    const searchInput = document.querySelector("#search");
+    const searchBtn = document.querySelector("#search-btn");
+
+    let isFetching = false;
+    let lastSearchedQuery = "";
 
     function makeCard(gif) {
       const url = gif.images.fixed_height.url;
-      // Use the direct media URL format
       const mediaId = gif.id;
       const originalUrl = `https://media3.giphy.com/media/${mediaId}/giphy.gif`;
       
@@ -119,13 +124,20 @@
     }
 
     async function fetchGifs(query = "") {
+      const trimmedQuery = query.trim();
+
+      // Guard: Do nothing if already loading, or if the search query hasn't changed since the last request
+      if (isFetching || trimmedQuery === lastSearchedQuery) return;
+
+      isFetching = true;
+      searchBtn.disabled = true;
       status.hidden = false;
-      status.textContent = "Searching Giphy…";
-      
+      status.textContent = trimmedQuery ? "Searching Giphy…" : "Loading trending GIFs…";
+
       try {
         let endpoint = `https://api.giphy.com/v1/gifs/trending?api_key=${API_KEY}&limit=24`;
-        if (query.trim()) {
-          endpoint = `https://api.giphy.com/v1/gifs/search?api_key=${API_KEY}&q=${encodeURIComponent(query)}&limit=24`;
+        if (trimmedQuery) {
+          endpoint = `https://api.giphy.com/v1/gifs/search?api_key=${API_KEY}&q=${encodeURIComponent(trimmedQuery)}&limit=24`;
         }
 
         const response = await fetch(endpoint);
@@ -133,6 +145,8 @@
 
         const data = await response.json();
         const gifs = data.data;
+
+        lastSearchedQuery = trimmedQuery; // Remember this query successfully
 
         gallery.replaceChildren(...gifs.map(makeCard));
         count.textContent = gifs.length + (gifs.length === 1 ? " GIF" : " GIFs");
@@ -145,15 +159,22 @@
         count.textContent = "Unavailable";
         status.textContent = "Could not load GIFs from Giphy. Check your connection.";
         console.error(error);
+      } finally {
+        isFetching = false;
+        searchBtn.disabled = false;
       }
     }
 
-    // Debounced live search as user types
-    search.addEventListener("input", (e) => {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        fetchGifs(e.target.value);
-      }, 400);
+    // Trigger search when clicking the Search button
+    searchBtn.addEventListener("click", () => {
+      fetchGifs(searchInput.value);
+    });
+
+    // Trigger search when pressing Enter inside the input field
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        fetchGifs(searchInput.value);
+      }
     });
 
     // Initial load (Trending)
