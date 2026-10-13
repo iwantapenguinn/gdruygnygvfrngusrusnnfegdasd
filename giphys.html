@@ -63,7 +63,10 @@
 
     function makeCard(gif) {
       const url = gif.images.fixed_height.url;
-      const originalUrl = gif.images.original.url;
+      // Use the direct media URL format
+      const mediaId = gif.id;
+      const originalUrl = `https://media3.giphy.com/media/${mediaId}/giphy.gif`;
+      
       const card = document.createElement("article");
       card.className = "item";
 
